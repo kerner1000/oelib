@@ -4,11 +4,16 @@
  */
 package common.formatting;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URLEncoder;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringEscapeUtils;
@@ -107,6 +112,32 @@ public class StringFormatters {
 			list.removeAll(EMPTY_ENTRIES);
 		}
 //        return list;
+	}
+
+	@SuppressWarnings("deprecation")
+	public static String fixUrlEncoding(String location) {
+		try {
+			URI.create(location);
+			// seems ok
+			return location;
+		} catch (Exception ex) {
+			// encode
+			try {
+				location = URLEncoder.encode(location, "UTF-8");
+			} catch (UnsupportedEncodingException ex2) {
+				Logger.getLogger(StringFormatters.class.getName()).log(Level.SEVERE, null, ex);
+				location = URLEncoder.encode(location);
+			}
+
+			// fix most common problems, see http://www.permadi.com/tutorial/urlEncoding/ for useful info
+			location = location.replaceFirst("(?ims)%3a", ":").
+					replaceAll("(?ims)%2f", "/").
+					replaceFirst("(?ims)%3f", "?").
+					replaceAll("(?ims)%3d", "=").
+					replaceAll("(?ims)%26", "&").
+					replaceAll("(?ims)%2b", "+");
+			return location;
+		}
 	}
 
 	/**

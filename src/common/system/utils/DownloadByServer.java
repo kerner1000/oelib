@@ -51,7 +51,7 @@ import org.apache.http.protocol.HTTP;
  * @author fr
  */
 public class DownloadByServer {
-
+	
 	public static final int STATUS_NOT_INITED = 0;
 	public static final int STATUS_SUCCESS = 1;
 	public static final int STATUS_FAILURE = 2;
@@ -75,92 +75,92 @@ public class DownloadByServer {
 	private int status = STATUS_NOT_INITED;
 	private String referer;
 	private StatusLine statusLine;
-
+	
 	protected DownloadByServer(Object urlObject, HashMap<String, String> cookiesToSend, String referer) {
 		// must use factory methods
 		processURL(urlObject);
 		this.referer = referer;
 		this.cookiesToSend = cookiesToSend;
 	}
-
+	
 	public static DownloadByServer perform(Object urlObject) {
 		return DownloadByServer.perform(urlObject, (HashMap) null, (String) null);
 	}
-
+	
 	public static DownloadByServer perform(Object urlObject, String referer) {
 		return DownloadByServer.perform(urlObject, (HashMap) null, referer);
 	}
-
+	
 	public static DownloadByServer perform(Object urlObject, HashMap<String, String> cookies) {
 		return DownloadByServer.perform(urlObject, cookies, (String) null);
 	}
-
+	
 	public static DownloadByServer perform(Object urlObject, HashMap<String, String> cookies, String referer) {
 		return perform(urlObject, cookies, referer, null, null);
 	}
-
+	
 	public static DownloadByServer perform(Object urlObject, HashMap<String, String> cookies, String referer, String username, String password) {
 		return performRequest(GET, urlObject, null, cookies, null, referer, username, password);
 	}
-
+	
 	public static DownloadByServer performDelete(Object urlObject, HashMap<String, String> cookies, String referer, String username, String password) {
 		return performRequest(DELETE, urlObject, null, cookies, null, referer, username, password);
 	}
-
+	
 	public static DownloadByServer performPost(Object urlObject, HashMap<String, String> data) {
 		return DownloadByServer.performPost(urlObject, data, (String) null);
 	}
-
+	
 	public static DownloadByServer performPost(Object urlObject, HashMap<String, String> data, String referer) {
 		return DownloadByServer.performPost(urlObject, data, (HashMap) null);
 	}
-
+	
 	public static DownloadByServer performPost(Object urlObject, HashMap<String, String> data, HashMap<String, String> cookies) {
 		return DownloadByServer.performPost(urlObject, data, cookies, (HashMap) null);
 	}
-
+	
 	public static DownloadByServer performPost(Object urlObject, HashMap<String, String> data, HashMap<String, String> cookies, String referer) {
 		return DownloadByServer.performPost(urlObject, data, cookies, null, referer);
 	}
-
+	
 	public static DownloadByServer performPost(Object urlObject, HashMap<String, String> data, HashMap<String, String> cookies, HashMap<String, ByteArrayBody> files) {
 		return DownloadByServer.performPost(urlObject, data, cookies, files, (String) null);
 	}
-
+	
 	public static DownloadByServer performPost(Object urlObject, HashMap<String, String> data, HashMap<String, String> cookies, HashMap<String, ByteArrayBody> files, String referer) {
 		return performRequest(POST, urlObject, data, cookies, files, referer);
 	}
-
+	
 	public static DownloadByServer performPut(Object urlObject, HashMap<String, String> cookies, InputStream fileContent, String username, String password) {
 		DownloadByServer retval = new DownloadByServer(urlObject, cookies, null);
-
+		
 		try {
 			HttpPut request = new HttpPut(retval.uri);
-
+			
 			HttpEntity putFile = new BufferedHttpEntity(new InputStreamEntity(fileContent, -1));
 			request.setEntity(putFile);
-
+			
 			retval.addHeaderLinesToRequest(request);
 			retval.performRequest(request, username, password);
-
+			
 			return retval;
 		} catch (Exception ex) {
 			Logger.getLogger(DownloadByServer.class.getName()).log(Level.SEVERE, null, ex);
 			return null;
 		}
 	}
-
+	
 	private static DownloadByServer performRequest(String method, Object urlObject, HashMap<String, String> data, HashMap<String, String> cookies, HashMap<String, ByteArrayBody> files, String referer) {
 		return performRequest(method, urlObject, data, cookies, files, referer, null, null);
 	}
-
+	
 	private static DownloadByServer performRequest(final String method, Object urlObject, HashMap<String, String> data, HashMap<String, String> cookies, HashMap<String, ByteArrayBody> files, String referer, String username, String password) {
 		DownloadByServer retval = new DownloadByServer(urlObject, cookies, referer);
-
+		
 		if (data == null) {
 			data = new HashMap<String, String>();
 		}
-
+		
 		try {
 			HttpRequestBase request;
 			if (GET.equals(method)) {
@@ -170,7 +170,7 @@ public class DownloadByServer {
 			} else if (POST.equals(method)) {
 				HttpPost httpPost = new HttpPost(retval.uri);
 				request = httpPost;
-
+				
 				if (files != null) {
 					// POST and
 					MultipartEntity mpEntity = new MultipartEntity();
@@ -188,14 +188,14 @@ public class DownloadByServer {
 					for (Map.Entry<String, String> entry : data.entrySet()) {
 						nvps.add(new BasicNameValuePair(entry.getKey(), entry.getValue()));
 					}
-
+					
 					UrlEncodedFormEntity formData = new UrlEncodedFormEntity(nvps, HTTP.UTF_8);
 					httpPost.setEntity(formData);
 				}
 			} else {
 				return null;
 			}
-
+			
 			retval.addHeaderLinesToRequest(request);
 			retval.performRequest(request, username, password);
 			Header newLocation = retval.getFirstHeader("location");
@@ -216,44 +216,47 @@ public class DownloadByServer {
 					return perform(newLocationValue, cookies, referer);
 				}
 			}
-
+			
 			return retval;
 		} catch (Exception ex) {
 			Logger.getLogger(DownloadByServer.class.getName()).log(Level.SEVERE, null, ex);
 			return null;
 		}
 	}
-
+	
 	public static String encodeURL(String location) {
 		System.out.println("Navigating to " + location);
-		try {
-			URI.create(location);
-			// seems ok
-			return location;
-		} catch (Exception ex) {
-			// encode
-			try {
-				location = URLEncoder.encode(location, "UTF-8");
-			} catch (UnsupportedEncodingException ex2) {
-				Logger.getLogger(DownloadByServer.class.getName()).log(Level.SEVERE, null, ex);
-				location = URLEncoder.encode(location);
-			}
-
-			// fix most common problems, see http://www.permadi.com/tutorial/urlEncoding/ for useful info
-			location = location.replaceFirst("(?ims)%3a", ":").
-					replaceAll("(?ims)%2f", "/").
-					replaceFirst("(?ims)%3f", "?").
-					replaceAll("(?ims)%3d", "=").
-					replaceAll("(?ims)%26", "&").
-					replaceAll("(?ims)%2b", "+");
-			System.out.println("Fix URL to " + location);
-			return location;
+//		try {
+//			URI.create(location);
+//			// seems ok
+//			return location;
+//		} catch (Exception ex) {
+//			// encode
+//			try {
+//				location = URLEncoder.encode(location, "UTF-8");
+//			} catch (UnsupportedEncodingException ex2) {
+//				Logger.getLogger(DownloadByServer.class.getName()).log(Level.SEVERE, null, ex);
+//				location = URLEncoder.encode(location);
+//			}
+//
+//			// fix most common problems, see http://www.permadi.com/tutorial/urlEncoding/ for useful info
+//			location = location.replaceFirst("(?ims)%3a", ":").
+//					replaceAll("(?ims)%2f", "/").
+//					replaceFirst("(?ims)%3f", "?").
+//					replaceAll("(?ims)%3d", "=").
+//					replaceAll("(?ims)%26", "&").
+//					replaceAll("(?ims)%2b", "+");
+		String newLocation = StringFormatters.fixUrlEncoding(location);
+		if (!newLocation.equals(location)) {
+			System.out.println("Fix URL to " + newLocation);
 		}
+		return newLocation;
+//		}
 //        return location.replace(" ", "%20").
 //                replace("^", "%5E").
 //                replace("|", "%7C");
 	}
-
+	
 	private void processURL(Object urlObject) {
 		if (urlObject instanceof String) {
 			url = encodeURL((String) urlObject);
@@ -264,28 +267,28 @@ public class DownloadByServer {
 		}
 		uri = URI.create(url);
 	}
-
+	
 	public Header[] getHeaders(String name) {
 		if (response != null) {
 			return response.getHeaders(name);
 		}
 		return new Header[0];
 	}
-
+	
 	public Header getFirstHeader(String name) {
 		if (response != null) {
 			return response.getFirstHeader(name);
 		}
 		return null;
 	}
-
+	
 	public Header getLastHeader(String name) {
 		if (response != null) {
 			return response.getLastHeader(name);
 		}
 		return null;
 	}
-
+	
 	private void performRequest(HttpRequestBase request, String username, String password) {
 		try {
 			HttpClient httpclient = fac.getDefaultHttpClient(request.getURI()); // URI is used to determine which proxy to use
@@ -304,7 +307,7 @@ public class DownloadByServer {
 			status = STATUS_FAILURE;
 		}
 	}
-
+	
 	private void addHeaderLinesToRequest(HttpRequestBase request) {
 		// get German texts
 		request.setHeader(new BasicHeader("Accept-Language", "de-de,de;q=0.8,en-us;q=0.5,en;q=0.3"));
@@ -313,7 +316,7 @@ public class DownloadByServer {
 		}
 		addCookiesToRequest(request);
 	}
-
+	
 	private void addCookiesToRequest(HttpRequestBase request) {
 		if (this.cookiesToSend == null) {
 			return;
@@ -325,21 +328,21 @@ public class DownloadByServer {
 		}
 		request.setHeader(new BasicHeader("Cookie", StringUtils.join(cookie_nvps, ";")));
 	}
-
+	
 	public HashMap<String, String> getCookiesHashMap() {
 		if (receivedCookies == null) {
 			getCookiesBackend();
 		}
 		return receivedCookies;
 	}
-
+	
 	public String getCookiesString() {
 		if (receivedCookieString == null) {
 			getCookiesBackend();
 		}
 		return receivedCookieString;
 	}
-
+	
 	private void getCookiesBackend() {
 		this.receivedCookies = new HashMap<String, String>();
 		// have not yet been parsed
@@ -362,7 +365,7 @@ public class DownloadByServer {
 		}
 		this.receivedCookieString = StringUtils.join(receivedCookieList, ";");
 	}
-
+	
 	public InputStream getInputStream() {
 		if (status == STATUS_FAILURE // failed
 				|| data != null || bindata != null) { // too late
@@ -379,7 +382,7 @@ public class DownloadByServer {
 		}
 		return inputStream;
 	}
-
+	
 	public byte[] getBindata() {
 		if (data != null) {
 			return data.getBytes();
@@ -401,17 +404,17 @@ public class DownloadByServer {
 		}
 		return bindata;
 	}
-
+	
 	public String getData() {
 		return getData(null);
 	}
-
+	
 	public String getData(String encoding) {
 		if (bindata != null) {
 			if (encoding == null) {
 				return new String(bindata);
 			}
-
+			
 			try {
 				return new String(bindata, encoding);
 			} catch (UnsupportedEncodingException ex) {
@@ -435,11 +438,11 @@ public class DownloadByServer {
 		}
 		return data;
 	}
-
+	
 	public String getMimeType() {
 		return entity.getContentType().getValue();
 	}
-
+	
 	public String getFilename() {
 		Header lastHeader = this.response.getLastHeader("Content-Disposition");
 		if (lastHeader != null) {
@@ -451,18 +454,18 @@ public class DownloadByServer {
 				// unquote if required
 				filenameByServer = StringFormatters.removeStart(filenameByServer, "\"", "\'");
 				filenameByServer = StringFormatters.removeEnd(filenameByServer, "\"", "\'");
-
+				
 				return filenameByServer;
 			}
 		}
 		// cutAway everything before last / and after first ?
 		return StringFormatters.cutAwaySearch(StringFormatters.cutAwayPath(this.url));
 	}
-
+	
 	public int getStatus() {
 		return status;
 	}
-
+	
 	public int getStatusCode() {
 		if (statusLine != null) {
 			return statusLine.getStatusCode();
