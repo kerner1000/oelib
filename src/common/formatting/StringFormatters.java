@@ -147,7 +147,7 @@ public class StringFormatters {
 	 * @return
 	 */
 	public static String fixCASNr(String casNr) {
-		Pattern casNrPattern = Pattern.compile("^(\\d+)-?(\\d{2})-?(\\d)$");
+		Pattern casNrPattern = Pattern.compile("^\\s*(\\d+)-?(\\d{2})-?(\\d)\\s*$");
 		Matcher matcher = casNrPattern.matcher(casNr);
 		if (!matcher.matches()) {
 			return null;
@@ -156,9 +156,9 @@ public class StringFormatters {
 		char[] checkMe = (matcher.group(1) + matcher.group(2)).toCharArray();
 		int sum = 0, checkLen = checkMe.length;
 		for (int i = 0; i < checkLen; i++) {
-			sum = (checkLen - i) * NumFormatters.safeInt(checkMe[i]);
+			sum += (checkLen - i) * NumFormatters.safeInt(checkMe[i]);
 		}
-		if (matcher.group(3).equals(sum % 10)) {
+		if (matcher.group(3).equals(String.valueOf(sum % 10))) {
 			return matcher.group(1) + "-" + matcher.group(2) + "-" + matcher.group(3);
 		}
 		return null;
