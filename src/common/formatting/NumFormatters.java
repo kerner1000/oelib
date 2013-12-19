@@ -318,9 +318,9 @@ public class NumFormatters {
 		} catch (Exception e) {
 			try {
 				// try slow and difficult way using RE
-				Matcher long_matcher = EXPR_INT.matcher(string);
-				if (long_matcher.find()) {
-					retval = Long.parseLong(long_matcher.group(0));
+				Matcher longMatcher = EXPR_INT.matcher(string);
+				if (longMatcher.find()) {
+					retval = Long.parseLong(longMatcher.group(0));
 				}
 			} catch (Exception e2) {
 				// irrelevant
@@ -359,7 +359,7 @@ public class NumFormatters {
 		} catch (Exception e) {
 			try {
 				// try slow and difficult way using RE
-				string = string.replaceAll(",", ".");
+				string = string.replaceAll(",", (string.contains(".") ? "" : ".")); // if dot is also present, remove comma, otherwise replace by dot
 				Matcher doubleMatcher = EXPR_DOUBLE.matcher(string);
 				if (doubleMatcher.find()) {
 					retval = Double.valueOf(doubleMatcher.group());
