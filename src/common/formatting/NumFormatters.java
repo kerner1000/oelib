@@ -330,7 +330,7 @@ public class NumFormatters {
 	}
 
 	public static Double safeDoubleWithNull(Object number) {
-		if (number == null) {
+		if (number == null || number.equals(Double.NaN)) {
 			return null;
 		}
 		if (number instanceof Double) {
