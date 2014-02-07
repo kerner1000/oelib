@@ -427,7 +427,7 @@ public class NumFormatters {
 	 * @return
 	 */
 	public static double safeDouble(Double number) { // returns double value or 0.0
-		if (number != null) {
+		if (number != null && !number.equals(Double.NaN)) {
 			return number;
 		}
 		return 0.0;
@@ -440,7 +440,7 @@ public class NumFormatters {
 	 * @return
 	 */
 	public static double safeDouble(Integer number) { // returns double value or 0
-		if (number == null) {
+		if (number == null || number.equals(Double.NaN)) {
 			return 0.0;
 		}
 		try {
