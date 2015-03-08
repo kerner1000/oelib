@@ -41,6 +41,7 @@ import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HTTP;
 
 /**
@@ -88,55 +89,97 @@ public class DownloadByServer {
 		return DownloadByServer.perform(urlObject, (HashMap) null, (String) null);
 	}
 
-	public static DownloadByServer perform(Object urlObject, String referer) {
+	public static DownloadByServer perform(Object urlObject,
+			String referer) {
 		return DownloadByServer.perform(urlObject, (HashMap) null, referer);
 	}
 
-	public static DownloadByServer perform(Object urlObject, HashMap<String, String> cookies) {
+	public static DownloadByServer perform(Object urlObject,
+			HashMap<String, String> cookies) {
 		return DownloadByServer.perform(urlObject, cookies, (String) null);
 	}
 
-	public static DownloadByServer perform(Object urlObject, HashMap<String, String> cookies, String referer) {
+	public static DownloadByServer perform(Object urlObject,
+			HashMap<String, String> cookies,
+			String referer) {
 		return perform(urlObject, cookies, referer, null, null);
 	}
 
-	private static DownloadByServer perform(Object urlObject, HashMap<String, String> cookies, String referer, List<String> redirectChain) {
+	public static DownloadByServer perform(Object urlObject,
+			HashMap<String, String> cookies,
+			String referer, Map<String, Object> options) {
+		return perform(urlObject, cookies, referer, null, null, options);
+	}
+
+	private static DownloadByServer perform(Object urlObject,
+			HashMap<String, String> cookies,
+			String referer,
+			List<String> redirectChain) {
 		return perform(urlObject, cookies, referer, null, null, redirectChain);
 	}
 
-	public static DownloadByServer perform(Object urlObject, HashMap<String, String> cookies, String referer, String username, String password) {
-		return performRequest(GET, urlObject, null, cookies, null, referer, username, password, null);
+	public static DownloadByServer perform(Object urlObject,
+			HashMap<String, String> cookies,
+			String referer, String username, String password) {
+		return performRequest(GET, urlObject, null, cookies, null, referer, username, password, null, null);
 	}
 
-	private static DownloadByServer perform(Object urlObject, HashMap<String, String> cookies, String referer, String username, String password, List<String> redirectChain) {
-		return performRequest(GET, urlObject, null, cookies, null, referer, username, password, redirectChain);
+	public static DownloadByServer perform(Object urlObject,
+			HashMap<String, String> cookies,
+			String referer, String username, String password, Map<String, Object> options) {
+		return performRequest(GET, urlObject, null, cookies, null, referer, username, password, options, null);
 	}
 
-	public static DownloadByServer performDelete(Object urlObject, HashMap<String, String> cookies, String referer, String username, String password) {
-		return performRequest(DELETE, urlObject, null, cookies, null, referer, username, password, null);
+	private static DownloadByServer perform(Object urlObject,
+			HashMap<String, String> cookies,
+			String referer, String username, String password,
+			List<String> redirectChain) {
+		return performRequest(GET, urlObject, null, cookies, null, referer, username, password, null, redirectChain);
 	}
 
-	public static DownloadByServer performPost(Object urlObject, HashMap<String, String> data) {
+	private static DownloadByServer perform(Object urlObject,
+			HashMap<String, String> cookies,
+			String referer, String username, String password, Map<String, Object> options,
+			List<String> redirectChain) {
+		return performRequest(GET, urlObject, null, cookies, null, referer, username, password, options, redirectChain);
+	}
+
+	public static DownloadByServer performDelete(Object urlObject,
+			HashMap<String, String> cookies,
+			String referer, String username, String password) {
+		return performRequest(DELETE, urlObject, null, cookies, null, referer, username, password, null, null);
+	}
+
+	public static DownloadByServer performPost(Object urlObject,
+			HashMap<String, String> data) {
 		return DownloadByServer.performPost(urlObject, data, (String) null);
 	}
 
-	public static DownloadByServer performPost(Object urlObject, HashMap<String, String> data, String referer) {
+	public static DownloadByServer performPost(Object urlObject,
+			HashMap<String, String> data,
+			String referer) {
 		return DownloadByServer.performPost(urlObject, data, (HashMap) null);
 	}
 
-	public static DownloadByServer performPost(Object urlObject, HashMap<String, String> data, HashMap<String, String> cookies) {
+	public static DownloadByServer performPost(Object urlObject,
+			HashMap<String, String> data, HashMap<String, String> cookies) {
 		return DownloadByServer.performPost(urlObject, data, cookies, (HashMap) null);
 	}
 
-	public static DownloadByServer performPost(Object urlObject, HashMap<String, String> data, HashMap<String, String> cookies, String referer) {
+	public static DownloadByServer performPost(Object urlObject,
+			HashMap<String, String> data, HashMap<String, String> cookies,
+			String referer) {
 		return DownloadByServer.performPost(urlObject, data, cookies, null, referer);
 	}
 
-	public static DownloadByServer performPost(Object urlObject, HashMap<String, String> data, HashMap<String, String> cookies, HashMap<String, ByteArrayBody> files) {
+	public static DownloadByServer performPost(Object urlObject,
+			HashMap<String, String> data, HashMap<String, String> cookies, HashMap<String, ByteArrayBody> files) {
 		return DownloadByServer.performPost(urlObject, data, cookies, files, (String) null);
 	}
 
-	public static DownloadByServer performPost(Object urlObject, HashMap<String, String> data, HashMap<String, String> cookies, HashMap<String, ByteArrayBody> files, String referer) {
+	public static DownloadByServer performPost(Object urlObject,
+			HashMap<String, String> data, HashMap<String, String> cookies, HashMap<String, ByteArrayBody> files,
+			String referer) {
 		return performRequest(POST, urlObject, data, cookies, files, referer);
 	}
 
@@ -150,7 +193,7 @@ public class DownloadByServer {
 			request.setEntity(putFile);
 
 			retval.addHeaderLinesToRequest(request);
-			retval.performRequest(request, username, password);
+			retval.performRequest(request, username, password, null);
 
 			return retval;
 		} catch (Exception ex) {
@@ -159,11 +202,16 @@ public class DownloadByServer {
 		}
 	}
 
-	private static DownloadByServer performRequest(String method, Object urlObject, HashMap<String, String> data, HashMap<String, String> cookies, HashMap<String, ByteArrayBody> files, String referer) {
-		return performRequest(method, urlObject, data, cookies, files, referer, null, null, null);
+	private static DownloadByServer performRequest(String method, Object urlObject,
+			HashMap<String, String> data, HashMap<String, String> cookies, HashMap<String, ByteArrayBody> files,
+			String referer) {
+		return performRequest(method, urlObject, data, cookies, files, referer, null, null, null, null);
 	}
 
-	private static DownloadByServer performRequest(final String method, Object urlObject, HashMap<String, String> data, HashMap<String, String> cookies, HashMap<String, ByteArrayBody> files, String referer, String username, String password, List<String> redirectChain) {
+	private static DownloadByServer performRequest(final String method, Object urlObject,
+			HashMap<String, String> data, HashMap<String, String> cookies, HashMap<String, ByteArrayBody> files,
+			String referer, String username, String password, Map<String, Object> options,
+			List<String> redirectChain) {
 		DownloadByServer retval = new DownloadByServer(urlObject, cookies, referer, redirectChain);
 
 		if (data == null) {
@@ -206,7 +254,7 @@ public class DownloadByServer {
 			}
 
 			retval.addHeaderLinesToRequest(request);
-			retval.performRequest(request, username, password);
+			retval.performRequest(request, username, password, options);
 			Header newLocation = retval.getFirstHeader("location");
 			if (newLocation != null) {
 				// add any new cookies or overwrite existing ones
@@ -235,35 +283,11 @@ public class DownloadByServer {
 
 	public static String encodeURL(String location) {
 		System.out.println("Navigating to " + location);
-//		try {
-//			URI.create(location);
-//			// seems ok
-//			return location;
-//		} catch (Exception ex) {
-//			// encode
-//			try {
-//				location = URLEncoder.encode(location, "UTF-8");
-//			} catch (UnsupportedEncodingException ex2) {
-//				Logger.getLogger(DownloadByServer.class.getName()).log(Level.SEVERE, null, ex);
-//				location = URLEncoder.encode(location);
-//			}
-//
-//			// fix most common problems, see http://www.permadi.com/tutorial/urlEncoding/ for useful info
-//			location = location.replaceFirst("(?ims)%3a", ":").
-//					replaceAll("(?ims)%2f", "/").
-//					replaceFirst("(?ims)%3f", "?").
-//					replaceAll("(?ims)%3d", "=").
-//					replaceAll("(?ims)%26", "&").
-//					replaceAll("(?ims)%2b", "+");
 		String newLocation = StringFormatters.fixUrlEncoding(location);
 		if (!newLocation.equals(location)) {
 			System.out.println("Fix URL to " + newLocation);
 		}
 		return newLocation;
-//		}
-//        return location.replace(" ", "%20").
-//                replace("^", "%5E").
-//                replace("|", "%7C");
 	}
 
 	private void processURL(Object urlObject) {
@@ -307,6 +331,10 @@ public class DownloadByServer {
 		return redirectChain;
 	}
 
+	public String getUrl() {
+		return url;
+	}
+
 	public String getLastUrl() {
 		if (redirectChain != null) {
 			int size = redirectChain.size();
@@ -317,7 +345,7 @@ public class DownloadByServer {
 		return url;
 	}
 
-	private void performRequest(HttpRequestBase request, String username, String password) {
+	private void performRequest(HttpRequestBase request, String username, String password, Map<String, Object> options) {
 		try {
 			HttpClient httpclient = fac.getDefaultHttpClient(request.getURI()); // URI is used to determine which proxy to use
 			if (username != null && password != null && httpclient instanceof DefaultHttpClient) {
@@ -326,6 +354,12 @@ public class DownloadByServer {
 				credentialsProvider.setCredentials(
 						new AuthScope(uri.getHost(), uri.getPort()),
 						new UsernamePasswordCredentials(username, password));
+			}
+			if (options != null) {
+				HttpParams params = httpclient.getParams();
+				for (Map.Entry<String, Object> entry : options.entrySet()) {
+					params.setParameter(entry.getKey(), entry.getValue());
+				}
 			}
 			response = httpclient.execute(request);
 			statusLine = response.getStatusLine();
@@ -472,7 +506,7 @@ public class DownloadByServer {
 	}
 
 	public String getMimeType() {
-		return entity.getContentType().getValue();
+		return StringUtils.substringBefore(entity.getContentType().getValue(), ";"); // remove any charset info if present
 	}
 
 	public String getFilename() {

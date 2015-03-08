@@ -26,70 +26,69 @@ import org.apache.http.params.HttpParams;
  */
 public class HttpClientFactory {
 
-    /**
-     * overwrite this method to implement a client with configured proxy.
-     * @return 
-     */
-    protected HttpClient getDefaultHttpClient(URI uri) {
+	/**
+	 * overwrite this method to implement a client with configured proxy.
+	 *
+	 * @param uri
+	 * @return
+	 */
+	protected HttpClient getDefaultHttpClient(URI uri) {
 
-        HttpParams httpParams = new BasicHttpParams();
+		HttpParams httpParams = new BasicHttpParams();
 
-        Integer socketTimeout = 20, connectionTimeout = 20;
-        if (socketTimeout != null) {
-            httpParams.setParameter("http.socket.timeout", socketTimeout * 1000);
-        }
-        if (connectionTimeout != null) {
-            httpParams.setParameter("http.connection.timeout", connectionTimeout * 1000);
-        }
-        httpParams.setParameter(CoreProtocolPNames.HTTP_ELEMENT_CHARSET, "UTF-8");
+		int socketTimeout = 20, connectionTimeout = 20;
+		httpParams.setParameter("http.socket.timeout", socketTimeout * 1000);
+		httpParams.setParameter("http.connection.timeout", connectionTimeout * 1000);
+		httpParams.setParameter(CoreProtocolPNames.HTTP_ELEMENT_CHARSET, "UTF-8");
 
-        return getDefaultHttpClient(httpParams);
-    }
+		return getDefaultHttpClient(httpParams);
+	}
 
-    /**
-     * standard procedure to avoid errors caused by HttpClient being too strict. 
-     * Should not normally not be overwritten.
-     * @param httpParams
-     * @return 
-     */
-    protected HttpClient getDefaultHttpClient(HttpParams httpParams) {
-        TolerantRedirectStrategy tolerantRedirectStrategy = new TolerantRedirectStrategy();
+	/**
+	 * standard procedure to avoid errors caused by HttpClient being too strict.
+	 * Should not normally not be overwritten.
+	 *
+	 * @param httpParams
+	 * @return
+	 */
+	protected HttpClient getDefaultHttpClient(HttpParams httpParams) {
+		TolerantRedirectStrategy tolerantRedirectStrategy = new TolerantRedirectStrategy();
 
-        DefaultHttpClient httpclient = new DefaultHttpClient(httpParams);
-        httpclient.setRedirectStrategy(tolerantRedirectStrategy);
-        httpclient = wrapClient(httpclient);
-        httpclient.setRedirectStrategy(tolerantRedirectStrategy);
+		DefaultHttpClient httpclient = new DefaultHttpClient(httpParams);
+		httpclient.setRedirectStrategy(tolerantRedirectStrategy);
+		httpclient = wrapClient(httpclient);
+		httpclient.setRedirectStrategy(tolerantRedirectStrategy);
 
-        return httpclient;
-    }
+		return httpclient;
+	}
 
-    public static DefaultHttpClient wrapClient(HttpClient base) {
-        try {
-            SSLContext ctx = SSLContext.getInstance("TLS");
-            X509TrustManager tm = new X509TrustManager() {
+	public static DefaultHttpClient wrapClient(HttpClient base) {
+		try {
+			SSLContext ctx = SSLContext.getInstance("TLS");
+			X509TrustManager tm = new X509TrustManager() {
 
-                @Override
-                public void checkClientTrusted(X509Certificate[] xcs, String string) throws CertificateException {
-                }
+				@Override
+				public void checkClientTrusted(X509Certificate[] xcs, String string) throws CertificateException {
+				}
 
-                @Override
-                public void checkServerTrusted(X509Certificate[] xcs, String string) throws CertificateException {
-                }
+				@Override
+				public void checkServerTrusted(X509Certificate[] xcs, String string) throws CertificateException {
+				}
 
-                @Override
-                public X509Certificate[] getAcceptedIssuers() {
-                    return null;
-                }
-            };
-            ctx.init(null, new TrustManager[]{tm}, null);
-            SSLSocketFactory ssf = new SSLSocketFactory(ctx);
-            ssf.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-            ClientConnectionManager ccm = base.getConnectionManager();
-            SchemeRegistry sr = ccm.getSchemeRegistry();
-            sr.register(new Scheme("https", ssf, 443));
-            return new DefaultHttpClient(ccm, base.getParams());
-        } catch (Exception ex) {
-            return null;
-        }
-    }
+				@Override
+				public X509Certificate[] getAcceptedIssuers() {
+					return null;
+				}
+			};
+			ctx.init(null, new TrustManager[]{tm}, null);
+			SSLSocketFactory ssf = new SSLSocketFactory(ctx);
+			ssf.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+			ClientConnectionManager ccm = base.getConnectionManager();
+			SchemeRegistry sr = ccm.getSchemeRegistry();
+			sr.register(new Scheme("https", ssf, 443));
+			return new DefaultHttpClient(ccm, base.getParams());
+		} catch (Exception ex) {
+			return null;
+		}
+	}
 }

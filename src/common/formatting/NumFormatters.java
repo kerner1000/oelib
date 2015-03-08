@@ -63,11 +63,8 @@ public class NumFormatters {
 		if (obj == null) {
 			return false;
 		}
-		if (obj instanceof Double) {
-			return safeBool((Double) obj);
-		}
-		if (obj instanceof Integer) {
-			return safeBool((Integer) obj);
+		if (obj instanceof Number) {
+			return safeBool(((Number) obj).doubleValue());
 		}
 		if (obj instanceof Boolean) {
 			return (Boolean) obj;
@@ -118,13 +115,8 @@ public class NumFormatters {
 	 * @return
 	 */
 	public static int safeInt(Object integer) {
-		if (integer == null || Boolean.FALSE.equals(integer)) {
-			return 0;
-		} else if (Boolean.TRUE.equals(integer)) {
-			return 1;
-		} else {
-			return safeInt(String.valueOf(integer));
-		}
+		Integer safeIntWithNull = safeIntWithNull(integer);
+		return (safeIntWithNull == null ? 0 : safeIntWithNull);
 	}
 
 	/**
@@ -163,32 +155,25 @@ public class NumFormatters {
 		if (string == null || string.isEmpty()) {
 			return 0;
 		}
-		Integer retval = 0;
-		try {
-			retval = Integer.parseInt(string.trim());
-		} catch (Exception e) {
-			try {
-				// try slow and difficult way using RE
-				Matcher int_matcher = EXPR_INT.matcher(string);
-				if (int_matcher.find()) {
-					retval = Integer.parseInt(int_matcher.group(0));
-				}
-			} catch (Exception e2) {
-				// irrelevant
-			}
-		}
-		return safeInt(retval);
+		Integer safeIntWithNull = safeIntWithNull(string);
+		return (safeIntWithNull == null ? 0 : safeIntWithNull);
 	}
 
 	public static Integer safeIntWithNull(Object number) {
 		if (number == null) {
 			return null;
 		}
-		if (number instanceof Double) {
-			return safeInt((Double) number);
-		}
 		if (number instanceof Integer) {
 			return (Integer) number;
+		}
+		if (number instanceof Short) {
+			return ((Short) number).intValue();
+		}
+		if (number instanceof Long) {
+			return ((Long) number).intValue();
+		}
+		if (number instanceof Number) {
+			return safeInt(((Number) number).doubleValue());
 		}
 		if (number instanceof Boolean) {
 			return (((Boolean) number) == true ? 1 : 0);
@@ -210,9 +195,9 @@ public class NumFormatters {
 		} catch (Exception e) {
 			try {
 				// try slow and difficult way using RE
-				Matcher int_matcher = EXPR_INT.matcher(string);
-				if (int_matcher.find()) {
-					retval = Integer.parseInt(int_matcher.group(0));
+				Matcher intMatcher = EXPR_INT.matcher(string);
+				if (intMatcher.find()) {
+					retval = Integer.parseInt(intMatcher.group(0));
 				}
 			} catch (Exception e2) {
 				// irrelevant
@@ -228,11 +213,8 @@ public class NumFormatters {
 	 * @return
 	 */
 	public static long safeLong(Object longNum) {
-		if (longNum == null) {
-			return 0;
-		} else {
-			return safeLong(String.valueOf(longNum));
-		}
+		Long safeLongWithNull = safeLongWithNull(longNum);
+		return (safeLongWithNull == null ? 0 : safeLongWithNull);
 	}
 
 	/**
@@ -271,32 +253,25 @@ public class NumFormatters {
 		if (string == null || string.isEmpty()) {
 			return 0;
 		}
-		Long retval = 0L;
-		try {
-			retval = Long.parseLong(string.trim());
-		} catch (Exception e) {
-			try {
-				// try slow and difficult way using RE
-				Matcher long_matcher = EXPR_INT.matcher(string);
-				if (long_matcher.find()) {
-					retval = Long.parseLong(long_matcher.group(0));
-				}
-			} catch (Exception e2) {
-				// irrelevant
-			}
-		}
-		return safeLong(retval);
+		Long safeLongWithNull = safeLongWithNull(string);
+		return (safeLongWithNull == null ? 0 : safeLongWithNull);
 	}
 
 	public static Long safeLongWithNull(Object number) {
 		if (number == null) {
 			return null;
 		}
-		if (number instanceof Double) {
-			return safeLong((Double) number);
-		}
 		if (number instanceof Long) {
 			return (Long) number;
+		}
+		if (number instanceof Short) {
+			return ((Short) number).longValue();
+		}
+		if (number instanceof Integer) {
+			return ((Integer) number).longValue();
+		}
+		if (number instanceof Number) {
+			return safeLong(((Number) number).doubleValue());
 		}
 		if (number instanceof Boolean) {
 			return (((Boolean) number) == true ? 1L : 0L);
@@ -336,8 +311,8 @@ public class NumFormatters {
 		if (number instanceof Double) {
 			return (Double) number;
 		}
-		if (number instanceof Integer) {
-			return ((Integer) number) + 0.0;
+		if (number instanceof Number) {
+			return ((Number) number).doubleValue();
 		}
 		if (number instanceof Boolean) {
 			return (((Boolean) number) == true ? 1.0 : 0.0);
@@ -405,19 +380,8 @@ public class NumFormatters {
 	}
 
 	public static double safeDouble(Object number) { // returns double value or 0.0
-		if (number == null) {
-			return 0.0;
-		}
-		if (number instanceof Double) {
-			return (Double) number;
-		}
-		if (number instanceof Integer) {
-			return ((Integer) number) + 0.0;
-		}
-		if (number instanceof Boolean) {
-			return (((Boolean) number) == true ? 1.0 : 0.0);
-		}
-		return safeDouble(number.toString());
+		Double safeDoubleWithNull = safeDoubleWithNull(number);
+		return (safeDoubleWithNull == null ? 0 : safeDoubleWithNull);
 	}
 
 	/**
@@ -461,7 +425,8 @@ public class NumFormatters {
 	}
 
 	public static short safeShort(Object number) {
-		return (short) safeDouble(number);
+		Short safeShortWithNull = safeShortWithNull(number);
+		return (safeShortWithNull == null ? 0 : safeShortWithNull);
 	}
 
 	/**
@@ -474,23 +439,8 @@ public class NumFormatters {
 		if (string == null || string.isEmpty()) {
 			return 0.0;
 		}
-		Double retval = 0.0;
-		try {
-			retval = Double.valueOf(string.trim());
-			return safeDouble(retval);
-		} catch (Exception e) {
-			try {
-				// try slow and difficult way using RE
-				string = string.replaceAll(",", ".");
-				Matcher doubleMatcher = EXPR_DOUBLE.matcher(string);
-				if (doubleMatcher.find()) {
-					retval = Double.valueOf(doubleMatcher.group());
-				}
-			} catch (Exception e2) {
-				// irrelevant
-			}
-		}
-		return retval;
+		Double safeDoubleWithNull = safeDoubleWithNull(string);
+		return (safeDoubleWithNull == null ? 0 : safeDoubleWithNull);
 	}
 
 	public static Number constrainValue(Number value, Number min, Number max) {
