@@ -63,11 +63,11 @@ public class NumFormatters {
 		if (obj == null) {
 			return false;
 		}
-		if (obj instanceof Number) {
-			return safeBool(((Number) obj).doubleValue());
-		}
 		if (obj instanceof Boolean) {
 			return (Boolean) obj;
+		}
+		if (obj instanceof Number) {
+			return safeBool(((Number) obj).doubleValue());
 		}
 		return safeBool(obj.toString());
 	}
@@ -354,10 +354,11 @@ public class NumFormatters {
 		if (expression.isEmpty()) {
 			return null;
 		}
-		expression = expression.replaceAll("[a-zA-Z]\\s", ""). // prevent function calls
+		expression = expression.
+				replaceAll("x", "*"). // allow multiplication using x
+				replaceAll("[a-zA-Z]\\s", ""). // prevent function calls
 				replaceAll(",", ".").
 				replaceAll("%", "*0.01");
-		Object resultObj;
 		try {
 			return safeDoubleWithNull(JS_ENGINE.eval(expression));
 		} catch (ScriptException ex) {

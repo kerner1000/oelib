@@ -36,19 +36,19 @@ public class StringFormatters {
 		EMPTY_ENTRIES.add("");
 	}
 	// leave Unicode intact
-	public static final CharSequenceTranslator ESCAPE_JAVA =
-			new LookupTranslator(
-			new String[][]{
-		{"\"", "\\\""},
-		{"\\", "\\\\"},}).with(
-			new LookupTranslator(EntityArrays.JAVA_CTRL_CHARS_ESCAPE()));
+	public static final CharSequenceTranslator ESCAPE_JAVA
+			= new LookupTranslator(
+					new String[][]{
+						{"\"", "\\\""},
+						{"\\", "\\\\"},}).with(
+					new LookupTranslator(EntityArrays.JAVA_CTRL_CHARS_ESCAPE()));
 
 	public static String format(String pattern, Object[] args) {
 		return format(pattern, args, null);
 	}
 
 	public static String format(String pattern, Object[] args, Locale locale) {
-		MessageFormat messageFormat = new MessageFormat(pattern, locale);
+		MessageFormat messageFormat = (locale != null ? new MessageFormat(pattern, locale) : new MessageFormat(pattern));
 		return messageFormat.format(args, new StringBuffer(), null).toString();
 	}
 
