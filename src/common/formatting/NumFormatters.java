@@ -20,7 +20,9 @@ public class NumFormatters {
 
 	protected static ScriptEngine JS_ENGINE = ScriptingSupport.getJavascriptInterpreter();
 	protected static Pattern EXPR_INT = Pattern.compile("[\\-\\d]+", Pattern.CASE_INSENSITIVE + Pattern.MULTILINE + Pattern.DOTALL);
+	protected static Pattern EXPR_INT_STRICT = Pattern.compile("^[\\-\\d]+", Pattern.CASE_INSENSITIVE + Pattern.MULTILINE + Pattern.DOTALL);
 	protected static Pattern EXPR_DOUBLE = Pattern.compile("\\-?\\d*[\\.\\d]\\d*[eE]?\\d*", Pattern.CASE_INSENSITIVE + Pattern.MULTILINE + Pattern.DOTALL);
+	protected static Pattern EXPR_DOUBLE_STRICT = Pattern.compile("^\\-?\\d*[\\.\\d]\\d*[eE]?\\d*", Pattern.CASE_INSENSITIVE + Pattern.MULTILINE + Pattern.DOTALL);
 
 	public static Boolean safeBoolWithNull(String string) {
 		if (string == null) {
@@ -160,6 +162,10 @@ public class NumFormatters {
 	}
 
 	public static Integer safeIntWithNull(Object number) {
+		return safeIntWithNull(number, true);
+	}
+
+	public static Integer safeIntWithNull(Object number, boolean tolerant) {
 		if (number == null) {
 			return null;
 		}
@@ -178,16 +184,21 @@ public class NumFormatters {
 		if (number instanceof Boolean) {
 			return (((Boolean) number) == true ? 1 : 0);
 		}
-		return safeIntWithNull(number.toString());
+		return safeIntWithNull(number.toString(), tolerant);
+	}
+
+	public static Integer safeIntWithNull(String string) {
+		return safeIntWithNull(string, true);
 	}
 
 	/**
 	 * return Integer with value or null.
 	 *
 	 * @param string
+	 * @param tolerant: if true, a suitable number anywhere is accepted
 	 * @return
 	 */
-	public static Integer safeIntWithNull(String string) {
+	public static Integer safeIntWithNull(String string, boolean tolerant) {
 		Integer retval = null;
 		try {
 			// try simple way
@@ -195,7 +206,7 @@ public class NumFormatters {
 		} catch (Exception e) {
 			try {
 				// try slow and difficult way using RE
-				Matcher intMatcher = EXPR_INT.matcher(string);
+				Matcher intMatcher = (tolerant ? EXPR_INT : EXPR_INT_STRICT).matcher(string);
 				if (intMatcher.find()) {
 					retval = Integer.parseInt(intMatcher.group(0));
 				}
@@ -305,6 +316,10 @@ public class NumFormatters {
 	}
 
 	public static Double safeDoubleWithNull(Object number) {
+		return safeDoubleWithNull(number, true);
+	}
+
+	public static Double safeDoubleWithNull(Object number, boolean tolerant) {
 		if (number == null || number.equals(Double.NaN)) {
 			return null;
 		}
@@ -317,30 +332,37 @@ public class NumFormatters {
 		if (number instanceof Boolean) {
 			return (((Boolean) number) == true ? 1.0 : 0.0);
 		}
-		return safeDoubleWithNull(number.toString());
+		return safeDoubleWithNull(number.toString(), tolerant);
+	}
+
+	public static Double safeDoubleWithNull(String string) {
+		return safeDoubleWithNull(string, true);
 	}
 
 	/**
 	 * return Double with value or null.
 	 *
 	 * @param string
+	 * @param tolerant: if true, a suitable number anywhere is accepted
 	 * @return
 	 */
-	public static Double safeDoubleWithNull(String string) {
+	public static Double safeDoubleWithNull(String string, boolean tolerant) {
 		Double retval = null;
 		try {
 			// try simple way
 			retval = Double.valueOf(string);
 		} catch (Exception e) {
-			try {
-				// try slow and difficult way using RE
-				string = string.replaceAll(",", (string.contains(".") ? "" : ".")); // if dot is also present, remove comma, otherwise replace by dot
-				Matcher doubleMatcher = EXPR_DOUBLE.matcher(string);
-				if (doubleMatcher.find()) {
-					retval = Double.valueOf(doubleMatcher.group());
+			if (tolerant) {
+				try {
+					// try slow and difficult way using RE
+					string = string.replaceAll(",", (string.contains(".") ? "" : ".")); // if dot is also present, remove comma, otherwise replace by dot
+					Matcher doubleMatcher = (tolerant ? EXPR_DOUBLE : EXPR_DOUBLE_STRICT).matcher(string);
+					if (doubleMatcher.find()) {
+						retval = Double.valueOf(doubleMatcher.group());
+					}
+				} catch (Exception e2) {
+					// irrelevant
 				}
-			} catch (Exception e2) {
-				// irrelevant
 			}
 		}
 		return retval;
