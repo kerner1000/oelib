@@ -11,6 +11,7 @@ package common.system;
 public class Constants {
 
     public static final String GENERIC = "generic";
+	public static final String UTF8 = "UTF-8";
     public static final int STATUS_NOT_YET_DOWNLOADED = 1;
     public static final int STATUS_LOCKED = 2;
     public static final int STATUS_EXTRACTED = 3;

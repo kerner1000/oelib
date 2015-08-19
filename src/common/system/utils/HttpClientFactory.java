@@ -15,6 +15,7 @@ import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.impl.client.AbstractHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.CoreProtocolPNames;
@@ -51,7 +52,7 @@ public class HttpClientFactory {
 	 * @param httpParams
 	 * @return
 	 */
-	protected HttpClient getDefaultHttpClient(HttpParams httpParams) {
+	protected AbstractHttpClient getDefaultHttpClient(HttpParams httpParams) {
 		TolerantRedirectStrategy tolerantRedirectStrategy = new TolerantRedirectStrategy();
 
 		DefaultHttpClient httpclient = new DefaultHttpClient(httpParams);
@@ -91,4 +92,16 @@ public class HttpClientFactory {
 			return null;
 		}
 	}
+
+	/*public RequestConfig.Builder getRequestConfig() {
+		int socketTimeout = 20, connectionTimeout = 20;
+
+		return RequestConfig.custom().
+				setConnectTimeout(connectionTimeout * 1000).
+				setSocketTimeout(socketTimeout * 1000);
+	}
+
+	public ConnectionConfig.Builder getConnectionConfig() {
+		return ConnectionConfig.custom().setCharset(Charset.forName(Constants.UTF8));
+	}*/
 }

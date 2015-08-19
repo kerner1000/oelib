@@ -66,6 +66,7 @@ public class DownloadByServer {
 	// fields
 	private String url;
 	private URI uri;
+	private HttpRequestBase request;
 	private HttpResponse response;
 	private HttpEntity entity;
 	private Map<String, String> cookiesToSend;
@@ -385,6 +386,7 @@ public class DownloadByServer {
 	}
 
 	private void performRequest(HttpRequestBase request, String username, String password, Map<String, Object> options) {
+		this.request = request;
 		try {
 			HttpClient httpclient = fac.getDefaultHttpClient(request.getURI()); // URI is used to determine which proxy to use
 			if (username != null && password != null && httpclient instanceof DefaultHttpClient) {
@@ -496,18 +498,21 @@ public class DownloadByServer {
 			return data.getBytes();
 		}
 		if (bindata == null) {
+			InputStream is = null;
 			try {
-				InputStream is = getInputStream();
+				is = getInputStream();
 				if (is != null) {
 					bindata = IOUtils.toByteArray(is);
 					status = STATUS_SUCCESS;
 				} else {
 					status = STATUS_FAILURE;
 				}
-				IOUtils.closeQuietly(is);
 			} catch (Exception ex) {
 				Logger.getLogger(getClass().getName()).log(Level.SEVERE, null, ex);
 				status = STATUS_FAILURE;
+			} finally {
+				IOUtils.closeQuietly(is);
+				request.releaseConnection();
 			}
 		}
 		return bindata;
@@ -530,18 +535,21 @@ public class DownloadByServer {
 			}
 		}
 		if (data == null) {
+			InputStream is = null;
 			try {
-				InputStream is = getInputStream();
+				is = getInputStream();
 				if (is != null) {
 					data = IOUtils.toString(is, encoding);
 					status = STATUS_SUCCESS;
 				} else {
 					status = STATUS_FAILURE;
 				}
-				IOUtils.closeQuietly(is);
 			} catch (Exception ex) {
 				Logger.getLogger(getClass().getName()).log(Level.SEVERE, null, ex);
 				status = STATUS_FAILURE;
+			} finally {
+				IOUtils.closeQuietly(is);
+				request.releaseConnection();
 			}
 		}
 		return data;
