@@ -7,7 +7,7 @@
 	</parent>
 	<groupId>com.sciformation.oelib</groupId>
 	<artifactId>oelib</artifactId>
-	<version>1.0.1-SNAPSHOT</version>
+	<version>1.0.1</version>
 	<name>OELib</name>
 	<url>https://github.com/kerner1000/oelib</url>
 	<licenses>
