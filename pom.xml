@@ -9,7 +9,7 @@
 	<artifactId>oelib</artifactId>
 	<version>1.0.2-SNAPSHOT</version>
 	<name>OELib</name>
-	<url>https://github.com/kerner1000/oelib</url>
+	<url>https://github.com/rudolphi/oelib</url>
 	<licenses>
 		<license>
 			<name>The Apache Software License, Version 2.0</name>
@@ -17,9 +17,9 @@
 		</license>
 	</licenses>
 	<scm>
-		<connection>scm:git:git@github.com:kerner1000/oelib.git</connection>
-		<url>scm:git:git@github.com:kerner1000/oelib.git</url>
-		<developerConnection>scm:git:git@github.com:kerner1000/oelib.git</developerConnection>
+		<connection>scm:git:git@github.com:rudolphi/oelib.git</connection>
+		<url>scm:git:git@github.com:rudolphi/oelib.git</url>
+		<developerConnection>scm:git:git@github.com:rudolphi/oelib.git</developerConnection>
 	</scm>
 	<build>
 		<plugins>
