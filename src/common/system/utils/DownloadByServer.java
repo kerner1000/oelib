@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
@@ -27,6 +28,7 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.RedirectStrategy;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -40,6 +42,8 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.ByteArrayBody;
 import org.apache.http.entity.mime.content.StringBody;
+import org.apache.http.impl.client.AbstractHttpClient;
+import org.apache.http.impl.client.DecompressingHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
@@ -69,7 +73,8 @@ public class DownloadByServer {
 	private HttpRequestBase request;
 	private HttpResponse response;
 	private HttpEntity entity;
-	private Map<String, String> cookiesToSend;
+	private final Map<String, String> cookiesToSend;
+	private Map<String, String> redirCookies;
 	private Map<String, String> receivedCookies;
 	private String receivedCookieString;
 	private InputStream inputStream;
@@ -405,6 +410,18 @@ public class DownloadByServer {
 			response = httpclient.execute(request);
 			statusLine = response.getStatusLine();
 			entity = response.getEntity();
+
+			// get cookies from redirect
+			HttpClient redirClient = httpclient;
+			if (redirClient instanceof DecompressingHttpClient) {
+				redirClient = ((DecompressingHttpClient) redirClient).getHttpClient();
+			}
+			if (redirClient instanceof AbstractHttpClient) {
+				RedirectStrategy redirectStrategy = ((AbstractHttpClient) redirClient).getRedirectStrategy();
+				if (redirectStrategy instanceof TolerantRedirectStrategy) {
+					redirCookies = ((TolerantRedirectStrategy) redirectStrategy).getReceivedCookies();
+				}
+			}
 		} catch (Exception ex) {
 			Logger.getLogger(getClass().getName()).log(Level.SEVERE, null, ex);
 			status = STATUS_FAILURE;
@@ -424,7 +441,7 @@ public class DownloadByServer {
 	}
 
 	private void addCookiesToRequest(HttpRequestBase request) {
-		if (cookiesToSend == null) {
+		if (MapUtils.isEmpty(cookiesToSend)) {
 			return;
 		}
 		// write cookie header
@@ -449,14 +466,7 @@ public class DownloadByServer {
 		return receivedCookieString;
 	}
 
-	private void getCookiesBackend() {
-		this.receivedCookies = new HashMap<String, String>();
-		if (cookiesToSend != null) {
-			// collect all
-			receivedCookies.putAll(cookiesToSend);
-		}
-		// have not yet been parsed
-
+	protected static void addCookiesToMap(HttpResponse response, Map<String, String> receivedCookies) {
 		if (response != null) {
 			Header[] headers = response.getHeaders("Set-Cookie");
 			for (int i = 0; i < headers.length; i++) {
@@ -467,6 +477,23 @@ public class DownloadByServer {
 						StringUtils.substringAfter(cookieNvp, "="));
 			}
 		}
+	}
+
+	private void getCookiesBackend() {
+		this.receivedCookies = new HashMap<String, String>();
+
+		// pre-set cookies
+		if (cookiesToSend != null) {
+			receivedCookies.putAll(cookiesToSend);
+		}
+
+		// collect all cookies from redirects
+		if (redirCookies != null) {
+			receivedCookies.putAll(redirCookies);
+		}
+
+		// parse cookies from header
+		addCookiesToMap(response, receivedCookies);
 
 		// avoid doubles
 		List<String> receivedCookieList = new ArrayList<String>();
@@ -582,10 +609,25 @@ public class DownloadByServer {
 		return status;
 	}
 
+	public boolean isFailed() {
+		if (status == STATUS_FAILURE) {
+			return true;
+		}
+		int statusCode = statusLine.getStatusCode();
+		return (statusCode >= 400 && statusCode < 600);
+	}
+
 	public int getStatusCode() {
 		if (statusLine != null) {
 			return statusLine.getStatusCode();
 		}
 		return -1;
+	}
+
+	public String getStatusText() {
+		if (statusLine != null) {
+			return statusLine.getReasonPhrase();
+		}
+		return null;
 	}
 }

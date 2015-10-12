@@ -15,7 +15,7 @@ import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.impl.client.AbstractHttpClient;
+import org.apache.http.impl.client.DecompressingHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.CoreProtocolPNames;
@@ -34,7 +34,6 @@ public class HttpClientFactory {
 	 * @return
 	 */
 	protected HttpClient getDefaultHttpClient(URI uri) {
-
 		HttpParams httpParams = new BasicHttpParams();
 
 		int socketTimeout = 20, connectionTimeout = 20;
@@ -52,7 +51,7 @@ public class HttpClientFactory {
 	 * @param httpParams
 	 * @return
 	 */
-	protected AbstractHttpClient getDefaultHttpClient(HttpParams httpParams) {
+	protected HttpClient getDefaultHttpClient(HttpParams httpParams) {
 		TolerantRedirectStrategy tolerantRedirectStrategy = new TolerantRedirectStrategy();
 
 		DefaultHttpClient httpclient = new DefaultHttpClient(httpParams);
@@ -60,7 +59,7 @@ public class HttpClientFactory {
 		httpclient = wrapClient(httpclient);
 		httpclient.setRedirectStrategy(tolerantRedirectStrategy);
 
-		return httpclient;
+		return new DecompressingHttpClient(httpclient);
 	}
 
 	public static DefaultHttpClient wrapClient(HttpClient base) {
@@ -94,14 +93,14 @@ public class HttpClientFactory {
 	}
 
 	/*public RequestConfig.Builder getRequestConfig() {
-		int socketTimeout = 20, connectionTimeout = 20;
+	 int socketTimeout = 20, connectionTimeout = 20;
 
-		return RequestConfig.custom().
-				setConnectTimeout(connectionTimeout * 1000).
-				setSocketTimeout(socketTimeout * 1000);
-	}
+	 return RequestConfig.custom().
+	 setConnectTimeout(connectionTimeout * 1000).
+	 setSocketTimeout(socketTimeout * 1000);
+	 }
 
-	public ConnectionConfig.Builder getConnectionConfig() {
-		return ConnectionConfig.custom().setCharset(Charset.forName(Constants.UTF8));
-	}*/
+	 public ConnectionConfig.Builder getConnectionConfig() {
+	 return ConnectionConfig.custom().setCharset(Charset.forName(Constants.UTF8));
+	 }*/
 }
