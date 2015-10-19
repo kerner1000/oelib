@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright 2015 Felix Rudolphi
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *   http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- ******************************************************************************/
 /*
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
@@ -20,17 +5,44 @@
 package common.system.utils;
 
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolException;
 import org.apache.http.impl.client.DefaultRedirectStrategy;
+import org.apache.http.protocol.HttpContext;
 
 /**
  * Redirect strategy used in Apache HTTP client, which is more tolerant.
+ *
  * @author fr
  */
 public class TolerantRedirectStrategy extends DefaultRedirectStrategy {
 
-    @Override
-    protected URI createLocationURI(String location) throws ProtocolException {
-        return super.createLocationURI(DownloadByServer.encodeURL(location));
-    }
+	private Map<String, String> receivedCookies;
+
+	@Override
+	protected URI createLocationURI(String location) throws ProtocolException {
+		return super.createLocationURI(DownloadByServer.encodeURL(location));
+	}
+
+	public Map<String, String> getReceivedCookies() {
+		return receivedCookies;
+	}
+
+	@Override
+	public boolean isRedirected(HttpRequest request, HttpResponse response,
+			HttpContext context) throws ProtocolException {
+		boolean redirected = super.isRedirected(request, response, context);
+		if (redirected && response.containsHeader("Set-Cookie")) {
+			// info would otherwise be lost
+			if (receivedCookies == null) {
+				receivedCookies = new HashMap<String, String>();
+			}
+			DownloadByServer.addCookiesToMap(response, receivedCookies);
+		}
+		return redirected;
+	}
 }
