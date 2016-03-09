@@ -21,6 +21,19 @@
 		<url>scm:git:git@github.com:rudolphi/oelib.git</url>
 		<developerConnection>scm:git:git@github.com:rudolphi/oelib.git</developerConnection>
 	</scm>
+<!--	<repositories>
+		<repository>
+			<id>local-repo</id>
+			<releases>
+				<enabled>true</enabled>
+				<checksumPolicy>ignore</checksumPolicy>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+			<url>file://${project.basedir}/local-repo</url>
+		</repository>
+	</repositories>-->
 	<build>
 		<plugins>
 			<plugin>
@@ -55,9 +68,9 @@
 			<version>4.1</version>
 		</dependency>
 		<dependency>
-			<groupId>commons-collections</groupId>
-			<artifactId>commons-collections</artifactId>
-			<version>3.2.1</version>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-collections4</artifactId>
+			<version>4.1</version>
 		</dependency>
 	</dependencies>
 </project>
