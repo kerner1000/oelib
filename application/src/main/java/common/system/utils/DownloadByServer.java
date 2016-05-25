@@ -5,8 +5,10 @@
 package common.system.utils;
 
 import common.formatting.StringFormatters;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URL;
@@ -17,7 +19,9 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -43,6 +47,7 @@ import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.ByteArrayBody;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.AbstractHttpClient;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DecompressingHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
@@ -70,6 +75,7 @@ public class DownloadByServer {
 	// fields
 	private String url;
 	private URI uri;
+	private HttpClient httpclient;
 	private HttpRequestBase request;
 	private HttpResponse response;
 	private HttpEntity entity;
@@ -393,31 +399,31 @@ public class DownloadByServer {
 	private void performRequest(HttpRequestBase request, String username, String password, Map<String, Object> options) {
 		this.request = request;
 		try {
-			HttpClient httpclient = fac.getDefaultHttpClient(request.getURI()); // URI is used to determine which proxy to use
-			if (username != null && password != null && httpclient instanceof DefaultHttpClient) {
-				DefaultHttpClient dHttpclient = (DefaultHttpClient) httpclient;
+			this.httpclient = fac.getDefaultHttpClient(request.getURI()); // URI is used to determine which proxy to use
+
+			HttpClient realClient = getRealHttpClient();
+			if (username != null && password != null && realClient instanceof DefaultHttpClient) {
+				DefaultHttpClient dHttpclient = (DefaultHttpClient) realClient;
 				CredentialsProvider credentialsProvider = dHttpclient.getCredentialsProvider();
 				credentialsProvider.setCredentials(
 						new AuthScope(uri.getHost(), uri.getPort()),
 						new UsernamePasswordCredentials(username, password));
 			}
+
 			if (options != null) {
 				HttpParams params = httpclient.getParams();
 				for (Map.Entry<String, Object> entry : options.entrySet()) {
 					params.setParameter(entry.getKey(), entry.getValue());
 				}
 			}
+
 			response = httpclient.execute(request);
 			statusLine = response.getStatusLine();
 			entity = response.getEntity();
 
 			// get cookies from redirect
-			HttpClient redirClient = httpclient;
-			if (redirClient instanceof DecompressingHttpClient) {
-				redirClient = ((DecompressingHttpClient) redirClient).getHttpClient();
-			}
-			if (redirClient instanceof AbstractHttpClient) {
-				RedirectStrategy redirectStrategy = ((AbstractHttpClient) redirClient).getRedirectStrategy();
+			if (realClient instanceof AbstractHttpClient) {
+				RedirectStrategy redirectStrategy = ((AbstractHttpClient) realClient).getRedirectStrategy();
 				if (redirectStrategy instanceof TolerantRedirectStrategy) {
 					redirCookies = ((TolerantRedirectStrategy) redirectStrategy).getReceivedCookies();
 				}
@@ -426,6 +432,13 @@ public class DownloadByServer {
 			Logger.getLogger(getClass().getName()).log(Level.SEVERE, null, ex);
 			status = STATUS_FAILURE;
 		}
+	}
+
+	protected HttpClient getRealHttpClient() {
+		if (httpclient instanceof DecompressingHttpClient) {
+			return ((DecompressingHttpClient) httpclient).getHttpClient();
+		}
+		return httpclient;
 	}
 
 	private void addHeaderLinesToRequest(HttpRequestBase request) {
@@ -521,15 +534,24 @@ public class DownloadByServer {
 	}
 
 	public byte[] getBindata() {
+		return getBindata(Long.MAX_VALUE);
+	}
+
+	public byte[] getBindata(long maxSize) {
 		if (data != null) {
 			return data.getBytes();
 		}
 		if (bindata == null) {
+			long copied = 0;
 			InputStream is = null;
 			try {
 				is = getInputStream();
 				if (is != null) {
-					bindata = IOUtils.toByteArray(is);
+					// code copied to inline, to realize size limit
+					ByteArrayOutputStream baos = new ByteArrayOutputStream();
+					copied = IOUtils.copyLarge(is, baos, 0, maxSize);
+					bindata = baos.toByteArray();
+
 					status = STATUS_SUCCESS;
 				} else {
 					status = STATUS_FAILURE;
@@ -538,8 +560,7 @@ public class DownloadByServer {
 				Logger.getLogger(getClass().getName()).log(Level.SEVERE, null, ex);
 				status = STATUS_FAILURE;
 			} finally {
-				IOUtils.closeQuietly(is);
-				request.releaseConnection();
+				closeConnection(is, copied >= maxSize);
 			}
 		}
 		return bindata;
@@ -549,7 +570,15 @@ public class DownloadByServer {
 		return getData(null);
 	}
 
+	public String getData(long maxSize) {
+		return getData(null, maxSize);
+	}
+
 	public String getData(String encoding) {
+		return getData(encoding, Long.MAX_VALUE);
+	}
+
+	public String getData(String encoding, long maxSize) {
 		if (bindata != null) {
 			if (encoding == null) {
 				return new String(bindata);
@@ -562,11 +591,17 @@ public class DownloadByServer {
 			}
 		}
 		if (data == null) {
+			long copied = 0;
 			InputStream is = null;
 			try {
 				is = getInputStream();
 				if (is != null) {
-					data = IOUtils.toString(is, encoding);
+					// code copied to inline, to realize size limit
+					StringBuilderWriter sw = new StringBuilderWriter();
+					InputStreamReader in = new InputStreamReader(is, Charsets.toCharset(encoding));
+					copied = IOUtils.copyLarge(in, sw, 0, maxSize);
+					data = sw.toString();
+
 					status = STATUS_SUCCESS;
 				} else {
 					status = STATUS_FAILURE;
@@ -575,11 +610,28 @@ public class DownloadByServer {
 				Logger.getLogger(getClass().getName()).log(Level.SEVERE, null, ex);
 				status = STATUS_FAILURE;
 			} finally {
-				IOUtils.closeQuietly(is);
-				request.releaseConnection();
+				closeConnection(is, copied >= maxSize);
 			}
 		}
 		return data;
+	}
+
+	protected void closeConnection(final InputStream is, boolean doAbort) {
+		if (doAbort) {
+			// otherwise close will read infinitely
+			request.abort();
+			HttpClient realHttpClient = getRealHttpClient();
+			if (realHttpClient instanceof CloseableHttpClient) {
+				try {
+					((CloseableHttpClient) realHttpClient).close();
+				} catch (IOException ex) {
+					Logger.getLogger(getClass().getName()).log(Level.SEVERE, null, ex);
+				}
+			}
+		}
+
+		IOUtils.closeQuietly(is);
+		request.releaseConnection();
 	}
 
 	public String getMimeType() {
