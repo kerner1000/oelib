@@ -12,6 +12,7 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -596,12 +597,18 @@ public class DownloadByServer {
 			try {
 				is = getInputStream();
 				if (is != null) {
-					// code copied to inline, to realize size limit
-					StringBuilderWriter sw = new StringBuilderWriter();
-					InputStreamReader in = new InputStreamReader(is, Charsets.toCharset(encoding));
-					copied = IOUtils.copyLarge(in, sw, 0, maxSize);
-					data = sw.toString();
-
+					Charset charset = Charsets.toCharset(encoding);
+					if (maxSize < Long.MAX_VALUE) {
+						// code copied to inline, to realize size limit
+						StringBuilderWriter sw = new StringBuilderWriter();
+						InputStreamReader in = new InputStreamReader(is, charset);
+						copied = IOUtils.copyLarge(in, sw, 0, maxSize);
+						data = sw.toString();
+					} else {
+						// more efficient
+						data = IOUtils.toString(is, charset);
+						copied = maxSize;
+					}
 					status = STATUS_SUCCESS;
 				} else {
 					status = STATUS_FAILURE;
