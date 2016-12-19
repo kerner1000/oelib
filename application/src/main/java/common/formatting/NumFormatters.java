@@ -202,6 +202,7 @@ public class NumFormatters {
 		Integer retval = null;
 		try {
 			// try simple way
+			string=prepareNumberString(string);
 			retval = Integer.parseInt(string);
 		} catch (Exception e) {
 			try {
@@ -300,6 +301,7 @@ public class NumFormatters {
 		Long retval = null;
 		try {
 			// try simple way
+			string=prepareNumberString(string);
 			retval = Long.parseLong(string);
 		} catch (Exception e) {
 			try {
@@ -350,22 +352,45 @@ public class NumFormatters {
 		Double retval = null;
 		try {
 			// try simple way
+			string = prepareNumberString(string);
 			retval = Double.valueOf(string);
 		} catch (Exception e) {
 			if (tolerant) {
-				try {
-					// try slow and difficult way using RE
-					string = string.replaceAll(",", (string.contains(".") ? "" : ".")); // if dot is also present, remove comma, otherwise replace by dot
-					Matcher doubleMatcher = (tolerant ? EXPR_DOUBLE : EXPR_DOUBLE_STRICT).matcher(string);
-					if (doubleMatcher.find()) {
-						retval = Double.valueOf(doubleMatcher.group());
+				if ("true".equalsIgnoreCase(string)) {
+					retval = 1.0;
+				} else if ("false".equalsIgnoreCase(string)) {
+					retval = 0.0;
+				} else {
+					try {
+						// try slow and difficult way using RE
+						string = string.replaceAll(",", (string.contains(".") ? "" : ".")); // if dot is also present, remove comma, otherwise replace by dot
+						Matcher doubleMatcher = (tolerant ? EXPR_DOUBLE : EXPR_DOUBLE_STRICT).matcher(string);
+						if (doubleMatcher.find()) {
+							retval = Double.valueOf(doubleMatcher.group());
+						}
+					} catch (Exception e2) {
+						// irrelevant
 					}
-				} catch (Exception e2) {
-					// irrelevant
 				}
 			}
 		}
 		return retval;
+	}
+
+	protected static String prepareNumberString(String string) {
+		if (string != null) {
+			string = string.
+					replace("–", "-").
+					replace("−", "-").
+					replace("&minus;", "-").
+					replace("&#8722;", "-").
+					replace("&#x2212;", "-").
+					replace("&hyphen;", "-").
+					replace("&dash;", "-").
+					replace("&#8208;", "-").
+					replace("&#x2010;", "-");
+		}
+		return string;
 	}
 
 	public static Double evalToDouble(String expression) {
@@ -440,7 +465,7 @@ public class NumFormatters {
 	}
 
 	public static Short safeShortWithNull(Object number) {
-		Double retval = safeDoubleWithNull(number);
+		Integer retval = safeIntWithNull(number);
 		if (retval == null) {
 			return null;
 		}

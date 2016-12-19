@@ -343,14 +343,19 @@ public class DownloadByServer {
 	}
 
 	private void processURL(Object urlObject) {
-		if (urlObject instanceof String) {
-			url = encodeURL((String) urlObject);
-		} else if (urlObject instanceof URL) {
-			url = ((URL) urlObject).toString();
+		if (urlObject instanceof URI) {
+			uri = (URI) urlObject;
+			url = uri.toString();
 		} else {
-			throw new UnsupportedOperationException("urlObject must be String or URL.");
+			if (urlObject instanceof String) {
+				url = encodeURL((String) urlObject);
+			} else if (urlObject instanceof URL) {
+				url = ((URL) urlObject).toString();
+			} else {
+				throw new UnsupportedOperationException("urlObject must be String or URL.");
+			}
+			uri = URI.create(url);
 		}
-		uri = URI.create(url);
 		if (redirectChain == null) {
 			// begin redirect tracking
 			redirectChain = new ArrayList<String>();
