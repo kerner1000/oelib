@@ -266,10 +266,6 @@ public class DownloadByServer {
 			List<String> redirectChain) {
 		DownloadByServer retval = new DownloadByServer(urlObject, cookies, referer, redirectChain);
 
-		if (data == null) {
-			data = new HashMap<String, String>();
-		}
-
 		try {
 			HttpRequestBase request;
 			if (GET.equals(method)) {
@@ -283,8 +279,10 @@ public class DownloadByServer {
 				if (files != null) {
 					// POST and
 					MultipartEntity mpEntity = new MultipartEntity();
-					for (Map.Entry<String, String> entry : data.entrySet()) {
-						mpEntity.addPart(entry.getKey(), new StringBody(entry.getValue()));
+					if (data != null) {
+						for (Map.Entry<String, String> entry : data.entrySet()) {
+							mpEntity.addPart(entry.getKey(), new StringBody(entry.getValue()));
+						}
 					}
 					// also FILE
 					for (Map.Entry<String, ByteArrayBody> entry : files.entrySet()) {
@@ -294,8 +292,10 @@ public class DownloadByServer {
 				} else {
 					// POST only
 					List<NameValuePair> nvps = new ArrayList<NameValuePair>();
-					for (Map.Entry<String, String> entry : data.entrySet()) {
-						nvps.add(new BasicNameValuePair(entry.getKey(), entry.getValue()));
+					if (data != null) {
+						for (Map.Entry<String, String> entry : data.entrySet()) {
+							nvps.add(new BasicNameValuePair(entry.getKey(), entry.getValue()));
+						}
 					}
 
 					UrlEncodedFormEntity formData = new UrlEncodedFormEntity(nvps, HTTP.UTF_8);
@@ -356,11 +356,15 @@ public class DownloadByServer {
 			}
 			uri = URI.create(url);
 		}
+		initRedirChain();
+		redirectChain.add(url);
+	}
+
+	private void initRedirChain() {
 		if (redirectChain == null) {
 			// begin redirect tracking
 			redirectChain = new ArrayList<String>();
 		}
-		redirectChain.add(url);
 	}
 
 	public Header[] getHeaders(String name) {
@@ -431,7 +435,13 @@ public class DownloadByServer {
 			if (realClient instanceof AbstractHttpClient) {
 				RedirectStrategy redirectStrategy = ((AbstractHttpClient) realClient).getRedirectStrategy();
 				if (redirectStrategy instanceof TolerantRedirectStrategy) {
-					redirCookies = ((TolerantRedirectStrategy) redirectStrategy).getReceivedCookies();
+					TolerantRedirectStrategy tolerantRedirectStrategy = (TolerantRedirectStrategy) redirectStrategy;
+					List<String> redirChain = tolerantRedirectStrategy.getRedirectChain();
+					if (redirChain != null) {
+						initRedirChain();
+						redirectChain.addAll(redirChain);
+					}
+					redirCookies = tolerantRedirectStrategy.getReceivedCookies();
 				}
 			}
 		} catch (Exception ex) {

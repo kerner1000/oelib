@@ -5,7 +5,9 @@
 package common.system.utils;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -20,11 +22,18 @@ import org.apache.http.protocol.HttpContext;
  */
 public class TolerantRedirectStrategy extends DefaultRedirectStrategy {
 
+	private List<String> redirectChain;
 	private Map<String, String> receivedCookies;
 
 	@Override
 	protected URI createLocationURI(String location) throws ProtocolException {
-		return super.createLocationURI(DownloadByServer.encodeURL(location));
+		if (redirectChain == null) {
+			// begin redirect tracking
+			redirectChain = new ArrayList<String>();
+		}
+		String url = DownloadByServer.encodeURL(location);
+		redirectChain.add(url);
+		return super.createLocationURI(url);
 	}
 
 	@Override
@@ -38,6 +47,10 @@ public class TolerantRedirectStrategy extends DefaultRedirectStrategy {
 			DownloadByServer.addCookiesToMap(response, receivedCookies);
 		}
 		return redirected;
+	}
+
+	public List<String> getRedirectChain() {
+		return redirectChain;
 	}
 
 	public Map<String, String> getReceivedCookies() {
