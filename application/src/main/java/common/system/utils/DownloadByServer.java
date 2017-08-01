@@ -42,6 +42,7 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntity;
@@ -136,33 +137,33 @@ public class DownloadByServer {
 	public static DownloadByServer perform(Object urlObject,
 			Map<String, String> cookies,
 			String referer, String username, String password) {
-		return performRequest(GET, urlObject, null, cookies, null, referer, username, password, null, null);
+		return performRequest(GET, urlObject, null, cookies, null, null, referer, null, username, password, null, null);
 	}
 
 	public static DownloadByServer perform(Object urlObject,
 			Map<String, String> cookies,
 			String referer, String username, String password, Map<String, Object> options) {
-		return performRequest(GET, urlObject, null, cookies, null, referer, username, password, options, null);
+		return performRequest(GET, urlObject, null, cookies, null, null, referer, null, username, password, options, null);
 	}
 
 	private static DownloadByServer perform(Object urlObject,
 			Map<String, String> cookies,
 			String referer, String username, String password,
 			List<String> redirectChain) {
-		return performRequest(GET, urlObject, null, cookies, null, referer, username, password, null, redirectChain);
+		return performRequest(GET, urlObject, null, cookies, null, null, referer, null, username, password, null, redirectChain);
 	}
 
 	private static DownloadByServer perform(Object urlObject,
 			Map<String, String> cookies,
 			String referer, String username, String password, Map<String, Object> options,
 			List<String> redirectChain) {
-		return performRequest(GET, urlObject, null, cookies, null, referer, username, password, options, redirectChain);
+		return performRequest(GET, urlObject, null, cookies, null, null, referer, null, username, password, options, redirectChain);
 	}
 
 	public static DownloadByServer performDelete(Object urlObject,
 			Map<String, String> cookies,
 			String referer, String username, String password) {
-		return performRequest(DELETE, urlObject, null, cookies, null, referer, username, password, null, null);
+		return performRequest(DELETE, urlObject, null, cookies, null, null, referer, null, username, password, null, null);
 	}
 
 	public static DownloadByServer performPost(Object urlObject,
@@ -195,7 +196,7 @@ public class DownloadByServer {
 	public static DownloadByServer performPost(Object urlObject,
 			Map<String, String> data, Map<String, String> cookies, Map<String, ByteArrayBody> files,
 			String referer) {
-		return performRequest(POST, urlObject, data, cookies, files, referer);
+		return performRequest(POST, urlObject, data, cookies, files, null, referer, null);
 	}
 
 	public static DownloadByServer performSoap(Object urlObject, String soapAction, String soapData) {
@@ -236,6 +237,10 @@ public class DownloadByServer {
 		}
 	}
 
+	public static DownloadByServer performJson(Object urlObject, String jsonString, Map<String, String> cookies, String referer, Map<String, String> headerLines) {
+		return performRequest(POST, urlObject, null, cookies, null, jsonString, referer, headerLines);
+	}
+
 	public static DownloadByServer performPut(Object urlObject, Map<String, String> cookies, InputStream fileContent, String username, String password) {
 		DownloadByServer retval = new DownloadByServer(urlObject, cookies, null, null);
 
@@ -255,14 +260,14 @@ public class DownloadByServer {
 	}
 
 	private static DownloadByServer performRequest(String method, Object urlObject,
-			Map<String, String> data, Map<String, String> cookies, Map<String, ByteArrayBody> files,
-			String referer) {
-		return performRequest(method, urlObject, data, cookies, files, referer, null, null, null, null);
+			Map<String, String> data, Map<String, String> cookies, Map<String, ByteArrayBody> files, String jsonString,
+			String referer, Map<String, String> headerLines) {
+		return performRequest(method, urlObject, data, cookies, files, jsonString, referer, headerLines, null, null, null, null);
 	}
 
 	private static DownloadByServer performRequest(final String method, Object urlObject,
-			Map<String, String> data, Map<String, String> cookies, Map<String, ByteArrayBody> files,
-			String referer, String username, String password, Map<String, Object> options,
+			Map<String, String> data, Map<String, String> cookies, Map<String, ByteArrayBody> files, String jsonString,
+			String referer, Map<String, String> headerLines, String username, String password, Map<String, Object> options,
 			List<String> redirectChain) {
 		DownloadByServer retval = new DownloadByServer(urlObject, cookies, referer, redirectChain);
 
@@ -289,8 +294,11 @@ public class DownloadByServer {
 						mpEntity.addPart(entry.getKey(), entry.getValue());
 					}
 					httpPost.setEntity(mpEntity);
+				} else if (jsonString != null) {
+					StringEntity formData = new StringEntity(jsonString, ContentType.APPLICATION_JSON);
+					httpPost.setEntity(formData);
 				} else {
-					// POST only
+					// normal POST
 					List<NameValuePair> nvps = new ArrayList<NameValuePair>();
 					if (data != null) {
 						for (Map.Entry<String, String> entry : data.entrySet()) {
@@ -306,6 +314,13 @@ public class DownloadByServer {
 			}
 
 			retval.addHeaderLinesToRequest(request);
+
+			if (headerLines != null) {
+				for (Map.Entry<String, String> entry : headerLines.entrySet()) {
+					request.setHeader(entry.getKey(), entry.getValue());
+				}
+			}
+
 			retval.performRequest(request, username, password, options);
 			Header newLocation = retval.getFirstHeader("location");
 			if (newLocation != null) {

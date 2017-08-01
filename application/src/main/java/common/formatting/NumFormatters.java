@@ -202,7 +202,7 @@ public class NumFormatters {
 		Integer retval = null;
 		try {
 			// try simple way
-			string=prepareNumberString(string);
+			string = prepareNumberString(string);
 			retval = Integer.parseInt(string);
 		} catch (Exception e) {
 			try {
@@ -301,7 +301,7 @@ public class NumFormatters {
 		Long retval = null;
 		try {
 			// try simple way
-			string=prepareNumberString(string);
+			string = prepareNumberString(string);
 			retval = Long.parseLong(string);
 		} catch (Exception e) {
 			try {
@@ -363,7 +363,20 @@ public class NumFormatters {
 				} else {
 					try {
 						// try slow and difficult way using RE
-						string = string.replaceAll(",", (string.contains(".") ? "" : ".")); // if dot is also present, remove comma, otherwise replace by dot
+						int // firstDotIndex = string.indexOf("."),
+								firstCommaIndex = string.indexOf(","),
+								lastDotIndex = string.lastIndexOf(".");
+						// lastCommaIndex = string.lastIndexOf(",");
+						if (firstCommaIndex >= 0) { // contains comma, otherwise nothing to do at all
+							if (lastDotIndex > firstCommaIndex) {// dot is also present, remove any commas
+								// case 1,000.1234
+								string = string.replace(",", "");
+							} else { // remove dots, replace commas by dot
+								// case ca. 0,887
+								string = string.replace(".", "").replace(",", ".");
+							}
+						}
+						//string = string.replace(",", (string.contains(".") ? "" : ".")); // if dot is also present, remove comma, otherwise replace by dot
 						Matcher doubleMatcher = (tolerant ? EXPR_DOUBLE : EXPR_DOUBLE_STRICT).matcher(string);
 						if (doubleMatcher.find()) {
 							retval = Double.valueOf(doubleMatcher.group());
@@ -388,7 +401,12 @@ public class NumFormatters {
 					replace("&hyphen;", "-").
 					replace("&dash;", "-").
 					replace("&#8208;", "-").
-					replace("&#x2010;", "-");
+					replace("&#x2010;", "-").
+					replace(" ", "").
+					replace("&#160;", "").
+					replace("&#x00A0;", "").
+					replace("&#x00a0;", "").
+					replace("&nbsp;", "");
 		}
 		return string;
 	}
