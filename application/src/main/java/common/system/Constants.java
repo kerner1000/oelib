@@ -25,6 +25,7 @@ public class Constants {
 		"ott", "ots", "otp", "otg",
 		"docx", "xlsx", "pptx", // OOXML documents are also ZIP files
 		"docm", "xlsm", "pptm"};
+	public static final String SEVENZ = "7Z";
 
 	// related to SmartCardSignerApplet
 	public static final String X509_CERTIFICATE_TYPE = "X.509";
