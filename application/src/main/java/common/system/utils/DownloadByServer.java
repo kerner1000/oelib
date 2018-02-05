@@ -59,10 +59,12 @@ import org.apache.http.protocol.HTTP;
 
 /**
  * Class that lets the server download WWW documents and perform HTTP requests
- * like a client, used for screenscraping.
+ * like a client, used for screenscraping. Use
+ * {@link common.system.utils.HttpDownload} instead.
  *
  * @author fr
  */
+@Deprecated()
 public class DownloadByServer {
 
 	public static final int STATUS_NOT_INITED = 0;
@@ -196,7 +198,17 @@ public class DownloadByServer {
 	public static DownloadByServer performPost(Object urlObject,
 			Map<String, String> data, Map<String, String> cookies, Map<String, ByteArrayBody> files,
 			String referer) {
-		return performRequest(POST, urlObject, data, cookies, files, null, referer, null);
+		return performPost(urlObject, data, cookies, files, referer, null, null);
+	}
+
+	public static DownloadByServer performPost(Object urlObject,
+			Map<String, String> data, Map<String, String> cookies, Map<String, ByteArrayBody> files,
+			String referer, String username, String password) {
+		return performRequest(POST, urlObject, data, cookies, files, null, null, referer, null, username, password);
+	}
+
+	public static DownloadByServer performPost(Object urlObject, String postBody, ContentType postContentType, Map<String, String> cookies, String referer, Map<String, String> headerLines) {
+		return performRequest(POST, urlObject, null, cookies, null, postBody, postContentType, referer, headerLines, null, null);
 	}
 
 	public static DownloadByServer performSoap(Object urlObject, String soapAction, String soapData) {
@@ -238,7 +250,7 @@ public class DownloadByServer {
 	}
 
 	public static DownloadByServer performJson(Object urlObject, String jsonString, Map<String, String> cookies, String referer, Map<String, String> headerLines) {
-		return performRequest(POST, urlObject, null, cookies, null, jsonString, referer, headerLines);
+		return performRequest(POST, urlObject, null, cookies, null, jsonString, null, referer, headerLines, null, null);
 	}
 
 	public static DownloadByServer performPut(Object urlObject, Map<String, String> cookies, InputStream fileContent, String username, String password) {
@@ -260,13 +272,20 @@ public class DownloadByServer {
 	}
 
 	private static DownloadByServer performRequest(String method, Object urlObject,
-			Map<String, String> data, Map<String, String> cookies, Map<String, ByteArrayBody> files, String jsonString,
-			String referer, Map<String, String> headerLines) {
-		return performRequest(method, urlObject, data, cookies, files, jsonString, referer, headerLines, null, null, null, null);
+			Map<String, String> data, Map<String, String> cookies, Map<String, ByteArrayBody> files, String jsonString, ContentType postContentType,
+			String referer, Map<String, String> headerLines, String username, String password) {
+		return performRequest(method, urlObject, data, cookies, files, jsonString, postContentType, referer, headerLines, username, password, null, null);
 	}
 
-	private static DownloadByServer performRequest(final String method, Object urlObject,
-			Map<String, String> data, Map<String, String> cookies, Map<String, ByteArrayBody> files, String jsonString,
+	private static DownloadByServer performRequest(String method, Object urlObject,
+			Map<String, String> data, Map<String, String> cookies, Map<String, ByteArrayBody> files, String postBody,
+			String referer, Map<String, String> headerLines, String username, String password, Map<String, Object> options,
+			List<String> redirectChain) {
+		return performRequest(method, urlObject, data, cookies, files, postBody, null, referer, headerLines, username, password, options, redirectChain);
+	}
+
+	private static DownloadByServer performRequest(String method, Object urlObject,
+			Map<String, String> data, Map<String, String> cookies, Map<String, ByteArrayBody> files, String postBody, ContentType postContentType,
 			String referer, Map<String, String> headerLines, String username, String password, Map<String, Object> options,
 			List<String> redirectChain) {
 		DownloadByServer retval = new DownloadByServer(urlObject, cookies, referer, redirectChain);
@@ -294,8 +313,11 @@ public class DownloadByServer {
 						mpEntity.addPart(entry.getKey(), entry.getValue());
 					}
 					httpPost.setEntity(mpEntity);
-				} else if (jsonString != null) {
-					StringEntity formData = new StringEntity(jsonString, ContentType.APPLICATION_JSON);
+				} else if (postBody != null) {
+					if (postContentType == null) {
+						postContentType = ContentType.APPLICATION_JSON;
+					}
+					StringEntity formData = new StringEntity(postBody, postContentType);
 					httpPost.setEntity(formData);
 				} else {
 					// normal POST
