@@ -65,7 +65,7 @@ import org.apache.http.protocol.HTTP;
  * @author fr
  */
 @Deprecated()
-public class DownloadByServer {
+public class DownloadByServer implements IFHttpDownload {
 
 	public static final int STATUS_NOT_INITED = 0;
 	public static final int STATUS_SUCCESS = 1;
@@ -429,6 +429,7 @@ public class DownloadByServer {
 		return redirectChain;
 	}
 
+	@Override
 	public String getUrl() {
 		return url;
 	}
@@ -586,6 +587,7 @@ public class DownloadByServer {
 		return inputStream;
 	}
 
+	@Override
 	public byte[] getBindata() {
 		return getBindata(Long.MAX_VALUE);
 	}
@@ -619,6 +621,7 @@ public class DownloadByServer {
 		return bindata;
 	}
 
+	@Override
 	public String getData() {
 		return getData(null);
 	}
@@ -693,10 +696,12 @@ public class DownloadByServer {
 		request.releaseConnection();
 	}
 
+	@Override
 	public String getMimeType() {
 		return StringUtils.substringBefore(entity.getContentType().getValue(), ";"); // remove any charset info if present
 	}
 
+	@Override
 	public String getFilename() {
 		Header lastHeader = this.response.getLastHeader("Content-Disposition");
 		if (lastHeader != null) {
@@ -716,6 +721,7 @@ public class DownloadByServer {
 		return StringFormatters.cutAwaySearch(StringFormatters.cutAwayPath(this.url));
 	}
 
+	@Override
 	public int getStatus() {
 		return status;
 	}

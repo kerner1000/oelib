@@ -70,11 +70,8 @@ import org.apache.http.params.HttpParams;
  *
  * @author fr
  */
-public class HttpDownload {
+public class HttpDownload implements IFHttpDownload {
 
-	public static final int STATUS_NOT_INITED = 0;
-	public static final int STATUS_SUCCESS = 1;
-	public static final int STATUS_FAILURE = 2;
 	public static final String FILENAME_PREFIX = "filename=";
 	public static final String GET = "GET";
 	public static final String POST = "POST";
@@ -161,6 +158,7 @@ public class HttpDownload {
 		return this;
 	}
 
+	@Override
 	public String getUrl() {
 		return url;
 	}
@@ -559,6 +557,7 @@ public class HttpDownload {
 		return inputStream;
 	}
 
+	@Override
 	public byte[] getBindata() {
 		return getBindata(Long.MAX_VALUE);
 	}
@@ -592,6 +591,7 @@ public class HttpDownload {
 		return bindata;
 	}
 
+	@Override
 	public String getData() {
 		return getData(null);
 	}
@@ -666,10 +666,12 @@ public class HttpDownload {
 		request.releaseConnection();
 	}
 
+	@Override
 	public String getMimeType() {
 		return StringUtils.substringBefore(entity.getContentType().getValue(), ";"); // remove any charset info if present
 	}
 
+	@Override
 	public String getFilename() {
 		Header lastHeader = this.response.getLastHeader("Content-Disposition");
 		if (lastHeader != null) {
@@ -689,6 +691,7 @@ public class HttpDownload {
 		return StringFormatters.cutAwaySearch(StringFormatters.cutAwayPath(this.url));
 	}
 
+	@Override
 	public int getStatus() {
 		return status;
 	}
