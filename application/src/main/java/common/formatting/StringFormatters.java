@@ -10,38 +10,45 @@ import java.net.URLEncoder;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.text.translate.CharSequenceTranslator;
-import org.apache.commons.lang3.text.translate.EntityArrays;
-import org.apache.commons.lang3.text.translate.LookupTranslator;
+import org.apache.commons.text.translate.CharSequenceTranslator;
+import org.apache.commons.text.translate.EntityArrays;
+import org.apache.commons.text.translate.LookupTranslator;
 
 /**
  * collection of helper functions for handling Strings.
- * <p/>
+ *
  * @author fr
  */
 public class StringFormatters {
 
 	private final static List<String> EMPTY_ENTRIES = new ArrayList<String>();
+	private static final String[] SEARCH_SPACE = new String[]{"&nbsp;", String.valueOf((char) 160), String.valueOf((char) 8197)};
+	private static final String[] SEARCH_LINE_BREAK = new String[]{"\r\n", "\r"};
+	private static final String[] SEARCH_AMP = new String[]{"&", "&amp;amp;"};
+
+	private static final Map<CharSequence, CharSequence> ESCAPE_JAVA_MAP = new HashMap<CharSequence, CharSequence>(2);
 
 	static {
+		ESCAPE_JAVA_MAP.put("\"", "\\\"");
+		ESCAPE_JAVA_MAP.put("\\", "\\\\");
+
 		EMPTY_ENTRIES.add(null);
 		EMPTY_ENTRIES.add("");
 	}
 	// leave Unicode intact
 	public static final CharSequenceTranslator ESCAPE_JAVA
-			= new LookupTranslator(
-					new String[][]{
-						{"\"", "\\\""},
-						{"\\", "\\\\"},}).with(
-					new LookupTranslator(EntityArrays.JAVA_CTRL_CHARS_ESCAPE()));
+			= new LookupTranslator(ESCAPE_JAVA_MAP).with(
+					new LookupTranslator(EntityArrays.JAVA_CTRL_CHARS_ESCAPE));
 
 	public static String format(String pattern, Object[] args) {
 		return format(pattern, args, null);
@@ -88,7 +95,7 @@ public class StringFormatters {
 	public static String addPipes(String molfile) {
 		molfile = fixLineEnds(molfile);
 		if (molfile != null) {
-			molfile = molfile.replace("\n", "|");
+			molfile = StringUtils.replace(molfile, "\n", "|");
 		}
 		return molfile;
 	}
@@ -102,7 +109,7 @@ public class StringFormatters {
 	public static String removePipes(String molfile) {
 		molfile = fixLineEnds(molfile);
 		if (molfile != null) {
-			molfile = molfile.replace("|", "\n");
+			molfile = StringUtils.replace(molfile, "|", "\n");
 		}
 		return molfile;
 	}
@@ -177,6 +184,15 @@ public class StringFormatters {
 		return new byte[]{};
 	}
 
+	public static String replaceEach(String text, String[] searchString, String replacement) {
+		if (!StringUtils.isEmpty(text) && searchString != null) {
+			for (int i = 0; i < searchString.length; i++) {
+				text = StringUtils.replace(text, searchString[i], replacement);
+			}
+		}
+		return text;
+	}
+
 	/**
 	 * replace non-breaking spaces by normal ones.
 	 *
@@ -185,17 +201,14 @@ public class StringFormatters {
 	 */
 	public static String fixNbsp(String text) {
 		if (text != null) {
-			text = text.replace("&nbsp;", " ");
-			text = text.replace(String.valueOf((char) 160), " ");
-			text = text.replace(String.valueOf((char) 8197), " ");
+			text = replaceEach(text, SEARCH_SPACE, " ");
 		}
 		return text;
 	}
 
 	public static String fixLineEnds(String text) {
 		if (text != null) {
-			text = text.replace("\r\n", "\n"); // Win
-			text = text.replace("\r", "\n"); // Mac
+			text = replaceEach(text, SEARCH_LINE_BREAK, "\n");
 		}
 		return text;
 	}
@@ -208,8 +221,7 @@ public class StringFormatters {
 	 */
 	public static String fixUrl(String url) {
 		if (url != null) {
-			url = url.replace("&", "&amp;");
-			url = url.replace("&amp;amp;", "&amp;");
+			url = replaceEach(url, SEARCH_AMP, "&amp;");
 		}
 		return url;
 	}

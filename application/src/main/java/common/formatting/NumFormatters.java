@@ -9,11 +9,12 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import common.system.utils.ScriptingSupport;
 import java.util.regex.Pattern;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Tools for easily getting numbers out of most anything that can be interpreted
  * as number. If not, functions return 0 or 0.0, respectively.
- * <p/>
+ *
  * @author fr
  */
 public class NumFormatters {
@@ -23,6 +24,9 @@ public class NumFormatters {
 	protected static Pattern EXPR_INT_STRICT = Pattern.compile("^[\\-\\d]+", Pattern.CASE_INSENSITIVE + Pattern.MULTILINE + Pattern.DOTALL);
 	protected static Pattern EXPR_DOUBLE = Pattern.compile("\\-?\\d*[\\.\\d]\\d*[eE]?\\d*", Pattern.CASE_INSENSITIVE + Pattern.MULTILINE + Pattern.DOTALL);
 	protected static Pattern EXPR_DOUBLE_STRICT = Pattern.compile("^\\-?\\d*[\\.\\d]\\d*[eE]?\\d*", Pattern.CASE_INSENSITIVE + Pattern.MULTILINE + Pattern.DOTALL);
+	//																8211 8722 
+	private static final String[] SEARCH_NUMBER_MINUS = new String[]{"–", "−", "&minus;", "&#8211;", "&#8722;", "&#x2212;", "&hyphen;", "&dash;", "&#8208;", "&#x2010;"};
+	private static final String[] SEARCH_NUMBER_REMOVE = new String[]{" ", "&#160;", "&#x00A0;", "&#x00a0;", "&nbsp;"};
 
 	public static Boolean safeBoolWithNull(String string) {
 		if (string == null) {
@@ -370,10 +374,10 @@ public class NumFormatters {
 						if (firstCommaIndex >= 0) { // contains comma, otherwise nothing to do at all
 							if (lastDotIndex > firstCommaIndex) {// dot is also present, remove any commas
 								// case 1,000.1234
-								string = string.replace(",", "");
+								string = StringUtils.remove(string, ",");
 							} else { // remove dots, replace commas by dot
 								// case ca. 0,887
-								string = string.replace(".", "").replace(",", ".");
+								string = StringUtils.remove(string, ".").replace(',', '.');
 							}
 						}
 						//string = string.replace(",", (string.contains(".") ? "" : ".")); // if dot is also present, remove comma, otherwise replace by dot
@@ -392,21 +396,7 @@ public class NumFormatters {
 
 	protected static String prepareNumberString(String string) {
 		if (string != null) {
-			string = string.
-					replace("–", "-").
-					replace("−", "-").
-					replace("&minus;", "-").
-					replace("&#8722;", "-").
-					replace("&#x2212;", "-").
-					replace("&hyphen;", "-").
-					replace("&dash;", "-").
-					replace("&#8208;", "-").
-					replace("&#x2010;", "-").
-					replace(" ", "").
-					replace("&#160;", "").
-					replace("&#x00A0;", "").
-					replace("&#x00a0;", "").
-					replace("&nbsp;", "");
+			string = StringFormatters.replaceEach(StringFormatters.replaceEach(string, SEARCH_NUMBER_MINUS, "-"), SEARCH_NUMBER_REMOVE, "");
 		}
 		return string;
 	}
