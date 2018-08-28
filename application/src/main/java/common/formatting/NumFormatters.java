@@ -22,8 +22,8 @@ public class NumFormatters {
 	protected static ScriptEngine JS_ENGINE = ScriptingSupport.getJavascriptInterpreter();
 	protected static Pattern EXPR_INT = Pattern.compile("[\\-\\d]+", Pattern.CASE_INSENSITIVE + Pattern.MULTILINE + Pattern.DOTALL);
 	protected static Pattern EXPR_INT_STRICT = Pattern.compile("^[\\-\\d]+", Pattern.CASE_INSENSITIVE + Pattern.MULTILINE + Pattern.DOTALL);
-	protected static Pattern EXPR_DOUBLE = Pattern.compile("\\-?\\d*[\\.\\d]\\d*[eE]?\\d*", Pattern.CASE_INSENSITIVE + Pattern.MULTILINE + Pattern.DOTALL);
-	protected static Pattern EXPR_DOUBLE_STRICT = Pattern.compile("^\\-?\\d*[\\.\\d]\\d*[eE]?\\d*", Pattern.CASE_INSENSITIVE + Pattern.MULTILINE + Pattern.DOTALL);
+	protected static Pattern EXPR_DOUBLE = Pattern.compile("\\-?\\d*[\\.\\d]\\d*[eE]?\\-?\\d*", Pattern.CASE_INSENSITIVE + Pattern.MULTILINE + Pattern.DOTALL);
+	protected static Pattern EXPR_DOUBLE_STRICT = Pattern.compile("^\\-?\\d*[\\.\\d]\\d*[eE]?\\-?\\d*", Pattern.CASE_INSENSITIVE + Pattern.MULTILINE + Pattern.DOTALL);
 	//																8211 8722 
 	private static final String[] SEARCH_NUMBER_MINUS = new String[]{"–", "−", "&minus;", "&#8211;", "&#8722;", "&#x2212;", "&hyphen;", "&dash;", "&#8208;", "&#x2010;"};
 	private static final String[] SEARCH_NUMBER_REMOVE = new String[]{" ", "&#160;", "&#x00A0;", "&#x00a0;", "&nbsp;"};
@@ -460,14 +460,8 @@ public class NumFormatters {
 	 * @return
 	 */
 	public static double safeDouble(Integer number) { // returns double value or 0
-		if (number == null || number.equals(Double.NaN)) {
-			return 0.0;
-		}
-		try {
-			Double retval = Double.valueOf(number);
-			return safeDouble(retval);
-		} catch (Exception e) {
-			// irrelevant
+		if (number != null) {
+			return number;
 		}
 		return 0.0;
 	}

@@ -75,7 +75,6 @@ public class DownloadByServer implements IFHttpDownload {
 	public static final String POST = "POST";
 	public static final String PUT = "PUT";
 	public static final String DELETE = "DELETE";
-	public static HttpClientFactory fac = new HttpClientFactory();
 	// fields
 	private String url;
 	private URI uri;
@@ -447,7 +446,7 @@ public class DownloadByServer implements IFHttpDownload {
 	private void performRequest(HttpRequestBase request, String username, String password, Map<String, Object> options) {
 		this.request = request;
 		try {
-			this.httpclient = fac.getDefaultHttpClient(request.getURI()); // URI is used to determine which proxy to use
+			this.httpclient = HttpDownload.fac.getDefaultHttpClient(request.getURI()); // URI is used to determine which proxy to use
 
 			HttpClient realClient = getRealHttpClient();
 			if (username != null && password != null && realClient instanceof DefaultHttpClient) {
